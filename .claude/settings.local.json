@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\39393\\\\OneDrive\\\\Desktop\\\\preventivi-crm\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(grep -E '\\\\.\\(tsx|ts|jsx|js\\)$')",
+      "Bash(grep -E '\\\\.\\(json|sql|ts|js\\)$|supabase|db')",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "claude-flow"
+  ]
+}

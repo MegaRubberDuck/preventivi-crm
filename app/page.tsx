@@ -1,65 +1,140 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { listQuotes } from '@/actions/quotes'
+import { STATUS_LABELS, STATUS_COLORS } from '@/lib/constants'
+import { Header } from '@/components/Header'
+import type { Quote } from '@/lib/types'
 
-export default function Home() {
+const eurFormatter = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+
+function fmt(n: number) {
+  return eurFormatter.format(n)
+}
+
+function fmtDate(s: string) {
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: '2-digit' })
+}
+
+function DeltaBadge({ pct }: { pct: number }) {
+  const abs = Math.abs(pct)
+  const color = abs <= 15 ? 'bg-green-50 text-green-700' : abs <= 30 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-600'
+  const sign = pct >= 0 ? '+' : ''
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tabnum ${color}`}>
+      {sign}{pct.toFixed(1)}%
+    </span>
+  )
+}
+
+export default async function DashboardPage() {
+  let quotes: Quote[] = []
+  try {
+    quotes = await listQuotes()
+  } catch (err) {
+    console.error('Failed to load quotes:', err)
+  }
+
+  const total = quotes.length
+  const won   = quotes.filter((q) => q.status === 'won').length
+  const draft  = quotes.filter((q) => q.status === 'draft').length
+  const sent   = quotes.filter((q) => q.status === 'sent').length
+
+  const stats = [
+    { label: 'Totale preventivi', value: total },
+    { label: 'Bozze', value: draft },
+    { label: 'Inviati', value: sent },
+    { label: 'Vinti', value: won },
+  ]
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc]">
+      <Header />
+      <main className="max-w-[1280px] mx-auto px-6 py-6 space-y-5">
+        <div className="flex justify-end">
+          <Link
+            href="/quotes/new"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#1b61c9] text-white text-[13px] font-medium rounded-[12px] hover:bg-[#254fad] transition-colors"
+            style={{ boxShadow: 'rgba(45,127,249,0.28) 0px 1px 3px' }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuovo preventivo
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        {/* Stats row */}
+        <div className="grid grid-cols-4 gap-4">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-white border border-[#e0e2e6] rounded-[16px] px-5 py-4" style={{ boxShadow: 'rgba(15,48,106,0.05) 0px 0px 20px' }}>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[#181d26]/50 mb-1">{s.label}</div>
+              <div className="text-[28px] font-bold text-[#181d26] tabnum leading-none">{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quotes table */}
+        <div className="bg-white border border-[#e0e2e6] rounded-[16px] overflow-hidden" style={{ boxShadow: 'rgba(15,48,106,0.05) 0px 0px 20px' }}>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e0e2e6]">
+            <span className="text-[13px] font-semibold text-[#181d26]">Preventivi</span>
+            <span className="text-[12px] text-[#181d26]/50">{total} totali</span>
+          </div>
+
+          {quotes.length === 0 ? (
+            <div className="py-16 text-center text-[13px] text-[#181d26]/40">
+              Nessun preventivo — <Link href="/quotes/new" className="text-[#1b61c9] underline">crea il primo</Link>
+            </div>
+          ) : (
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-[#e0e2e6] bg-[#f8fafc]">
+                  {['Titolo', 'Cliente', 'Stato', 'S1 (sizing)', 'S2 (comp.)', 'Delta', 'Prezzo', 'Data'].map((h) => (
+                    <th key={h} className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-[#181d26]/50 whitespace-nowrap">{h}</th>
+                  ))}
+                  <th className="px-4 py-2.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {quotes.map((q: Quote, idx: number) => {
+                  const snap = q.result_snapshot
+                  return (
+                    <tr key={q.id} className={`border-b border-[#e0e2e6] hover:bg-[#f8fafc] transition-colors ${idx === quotes.length - 1 ? 'border-b-0' : ''}`}>
+                      <td className="px-4 py-2.5">
+                        <Link href={`/quotes/${q.id}`} className="font-medium text-[#181d26] hover:text-[#1b61c9]">
+                          {q.title || 'Senza titolo'}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2.5 text-[#181d26]/70">
+                        {q.client?.name ?? '—'}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold ${STATUS_COLORS[q.status]}`}>
+                          {STATUS_LABELS[q.status]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 tabnum text-[#181d26]/70">
+                        {snap ? `${Math.round(snap.s1)}h` : '—'}
+                      </td>
+                      <td className="px-4 py-2.5 tabnum text-[#181d26]/70">
+                        {snap ? `${Math.round(snap.s2)}h` : '—'}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {snap && snap.s1 > 0 && typeof snap.deltaS1S2Pct === 'number' ? <DeltaBadge pct={snap.deltaS1S2Pct} /> : <span className="text-[#181d26]/30">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 tabnum font-medium">
+                        {snap?.prezzoConsigliato != null ? fmt(snap.prezzoConsigliato) : '—'}
+                      </td>
+                      <td className="px-4 py-2.5 text-[#181d26]/50 whitespace-nowrap">
+                        {fmtDate(q.created_at)}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <Link href={`/quotes/${q.id}`} className="text-[#1b61c9] text-[12px] hover:underline">Apri</Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </main>
     </div>
-  );
+  )
 }

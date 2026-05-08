@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
+@theme {
+  --color-navy:        #181d26;
+  --color-blue:        #1b61c9;
+  --color-blue-mid:    #254fad;
+  --color-surface:     #f8fafc;
+  --color-border:      #e0e2e6;
+  --color-text-weak:   rgba(4, 14, 32, 0.69);
+  --color-success:     #006400;
+  --font-family-sans:  'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --shadow-blue:       rgba(0,0,0,0.32) 0px 0px 1px, rgba(0,0,0,0.08) 0px 0px 2px, rgba(45,127,249,0.28) 0px 1px 3px, rgba(0,0,0,0.06) 0px 0px 0px 0.5px inset;
+  --shadow-soft:       rgba(15,48,106,0.05) 0px 0px 20px;
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: var(--color-navy);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+*, *::before, *::after { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { font-size: 14px; }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.08px;
+}
+
+/* Tabular numbers for financial data */
+.tabnum { font-variant-numeric: tabular-nums; }
+
+/* Scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 99px; }
+
+/* Input base */
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--foreground);
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
 }
