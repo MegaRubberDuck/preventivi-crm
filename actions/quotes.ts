@@ -13,6 +13,7 @@ export interface SaveQuotePayload {
   staffing_data?: StaffingData | null
   costs_data?: { externalMonthly: number } | null
   maut_data?: MAUTData | null
+  technical_description?: string | null
 }
 
 export async function saveQuote(payload: SaveQuotePayload): Promise<{ id: string } | { error: string }> {
@@ -33,6 +34,7 @@ export async function saveQuote(payload: SaveQuotePayload): Promise<{ id: string
     staffing_data:   payload.staffing_data ?? null,
     costs_data:      payload.costs_data ?? null,
     maut_data:       payload.maut_data ?? null,
+    technical_description: payload.technical_description ?? null,
     result_snapshot: snapshot,
   }
 

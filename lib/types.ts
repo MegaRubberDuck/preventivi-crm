@@ -158,6 +158,7 @@ export interface Quote {
   staffing_data: StaffingData | null
   costs_data: { externalMonthly: number } | null
   maut_data: MAUTData | null
+  technical_description: string | null
   result_snapshot: ResultSnapshot | null
   created_at: string
   updated_at: string

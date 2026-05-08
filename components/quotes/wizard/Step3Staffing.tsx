@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { StaffingData, ResultSnapshot } from '@/lib/types'
+import { calcBrooks } from '@/lib/constants'
 
 // ─── NumInput ─────────────────────────────────────────────────────────────────
 
@@ -106,7 +107,7 @@ export function Step3Staffing({ value: v, onChange, snapshot }: Props) {
 
   const n          = v.members.length
   const canali     = n > 0 ? (n * (n - 1)) / 2 : 0
-  const overheadPct = Math.min(canali * 3, 80)
+  const overheadPct = calcBrooks(n)
   const costoBase  = v.members.reduce((s, m) => s + totOre * (m.pct / 100) * m.rate, 0)
   const costoConOverhead = costoBase * (1 + overheadPct / 100)
   const extOnce    = extItems.filter((i) => i.type === 'once').reduce((s, i) => s + i.amount, 0)

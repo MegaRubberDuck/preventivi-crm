@@ -228,3 +228,8 @@ export const STATUS_COLORS: Record<string, string> = {
   won: 'bg-green-50 text-green-700',
   lost: 'bg-red-50 text-red-600',
 }
+
+export function calcBrooks(teamSize: number): number {
+  const channels = teamSize > 0 ? (teamSize * (teamSize - 1)) / 2 : 0
+  return Math.min(channels * 3, 80)
+}

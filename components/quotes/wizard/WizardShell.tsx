@@ -7,17 +7,21 @@ import { ConvergencePanel } from '../ConvergencePanel'
 import { Step1Sizing } from './Step1Sizing'
 import { Step2Components } from './Step2Components'
 import { Step3Staffing } from './Step3Staffing'
+import { Step4Technical } from './Step4Technical'
 import { Step4MAUT } from './Step4MAUT'
 import type { SizingData, ComponentData, StaffingData, MAUTData, ResultSnapshot, Quote } from '@/lib/types'
 import type { Client } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+import { calcBrooks } from '@/lib/constants'
+
 const STEPS = [
   { id: 1, label: 'Sizing (UCP/FP)' },
   { id: 2, label: 'Componenti' },
   { id: 3, label: 'Schedule' },
-  { id: 4, label: 'MAUT & Pricing' },
+  { id: 4, label: 'Tecnico' },
+  { id: 5, label: 'MAUT & Pricing' },
 ]
 
 const DEFAULT_SIZING: SizingData = {
@@ -77,6 +81,7 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
     ...DEFAULT_MAUT,
     ...(initialQuote?.maut_data ?? {}),
   })
+  const [technicalDescription, setTechnicalDescription] = useState(initialQuote?.technical_description ?? '')
   const [snapshot, setSnapshot] = useState<ResultSnapshot | null>(initialQuote?.result_snapshot ?? null)
   const [computeError, setComputeError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -104,8 +109,7 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
     const s2 = initialQuote?.result_snapshot?.s2 ?? 0
     if (s2 > 0 && staffing.members.length > 0) {
       const n = staffing.members.length
-      const canali = n > 0 ? (n * (n - 1)) / 2 : 0
-      const overheadPct = Math.min(canali * 3, 80)
+      const overheadPct = calcBrooks(n)
       const costoBase = staffing.members.reduce((s, m) => s + s2 * ((m.pct ?? 0) / 100) * (m.rate ?? 35), 0)
       const costoConOverhead = costoBase * (1 + overheadPct / 100)
       const extItems = staffing.extItems ?? []
@@ -136,8 +140,7 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
     const s2 = snapshot?.s2 ?? 0
     const members = data.members ?? []
     const n = members.length
-    const canali = n > 0 ? (n * (n - 1)) / 2 : 0
-    const overheadPct = Math.min(canali * 3, 80)
+    const overheadPct = calcBrooks(n)
     const costoBase = members.reduce((s, m) => s + s2 * ((m.pct ?? 0) / 100) * (m.rate ?? 35), 0)
     const costoConOverhead = costoBase * (1 + overheadPct / 100)
     const extItems = data.extItems ?? []
@@ -156,6 +159,10 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
     recompute(sizing, components, staffing, data)
   }
 
+  function handleTechnicalChange(data: string) {
+    setTechnicalDescription(data)
+  }
+
   function handleSave() {
     setSaveError(null)
     startSave(async () => {
@@ -169,6 +176,7 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
           staffing_data: staffing,
           maut_data: maut,
           costs_data: { externalMonthly: 0 },
+          technical_description: technicalDescription,
         })
         if ('error' in res) {
           setSaveError(res.error)
@@ -240,7 +248,8 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
           {step === 1 && <Step1Sizing value={sizing} onChange={handleSizingChange} />}
           {step === 2 && <Step2Components value={components} onChange={handleComponentsChange} snapshot={snapshot} staffing={staffing} />}
           {step === 3 && <Step3Staffing value={staffing} onChange={handleStaffingChange} snapshot={snapshot} />}
-          {step === 4 && <Step4MAUT value={maut} onChange={handleMautChange} snapshot={snapshot} />}
+          {step === 4 && <Step4Technical value={technicalDescription} onChange={handleTechnicalChange} />}
+          {step === 5 && <Step4MAUT value={maut} onChange={handleMautChange} snapshot={snapshot} />}
         </div>
 
         {/* Footer actions */}
@@ -254,7 +263,7 @@ export function WizardShell({ clients, clientsError, initialQuote, initialQuoteI
                 ← Indietro
               </button>
             )}
-            {step < 4 && (
+            {step < 5 && (
               <button
                 onClick={() => setStep(step + 1)}
                 className="px-4 py-1.5 rounded-[12px] bg-[#181d26] text-white text-[13px] font-medium hover:bg-[#181d26]/90 transition-colors"

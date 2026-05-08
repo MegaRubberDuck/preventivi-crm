@@ -101,6 +101,15 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
               })()}
             </Section>
 
+            {/* Technical Description */}
+            {q.technical_description && (
+              <Section title="Descrizione Tecnica">
+                <pre className="text-[13px] text-[#181d26] whitespace-pre-wrap font-mono bg-[#f8fafc] border border-[#e0e2e6] rounded-[10px] p-4 max-h-[400px] overflow-auto">
+                  {q.technical_description}
+                </pre>
+              </Section>
+            )}
+
             {/* Schedule */}
             {s.pm > 0 && (
               <Section title="Schedule (TDEV Sommerville)">
