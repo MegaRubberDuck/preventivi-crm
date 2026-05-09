@@ -1,7 +1,14 @@
 version: '3.8'
 services:
-  app:
+  crm-app:
     build: .
-    ports:
-      - "3000:3000"
+    container_name: crm-app
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - n8n-server_default
+
+networks:
+  n8n-server_default:
+    external: true
