@@ -1,9 +1,10 @@
 services:
   app:
-    build: .
+    build: ./crm
+    container_name: crm-app
     restart: unless-stopped
     env_file:
-      - .env
+      - ./crm/.env
     networks:
       - default
 
