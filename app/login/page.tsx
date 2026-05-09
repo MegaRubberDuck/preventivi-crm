@@ -41,7 +41,10 @@ function LoginForm() {
     try {
       const result = await signInAction(formData)
       if (result && 'error' in result) {
-        setError(result.error)
+        setError(String(result.error))
+      } else if (result && 'success' in result) {
+        setShowSuccess(true)
+        setTimeout(() => router.push(result.redirectTo || '/'), 800)
       }
     } catch (err: unknown) {
       if (err instanceof Error && !err.message.includes('NEXT_REDIRECT')) {

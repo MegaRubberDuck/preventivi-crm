@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createServerClient } from '@/lib/supabase/server'
 
 export async function signInAction(formData: FormData) {
@@ -26,7 +27,12 @@ export async function signInAction(formData: FormData) {
     return { error: error.message }
   }
 
-  redirect(safeRedirectTo)
+  if (!data?.session) {
+    return { error: 'Login failed - no session created' }
+  }
+
+  revalidatePath('/', 'layout')
+  return { success: true, redirectTo: safeRedirectTo }
 }
 
 export async function signOutAction() {
