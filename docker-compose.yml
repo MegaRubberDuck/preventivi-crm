@@ -1,4 +1,12 @@
 services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - default
+
   caddy:
     image: caddy:latest
     restart: unless-stopped
@@ -11,6 +19,8 @@ services:
       - caddy_config:/config
     networks:
       - default
+    depends_on:
+      - app
 
   n8n:
     image: n8nio/n8n

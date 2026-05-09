@@ -54,8 +54,8 @@ export async function middleware(request: NextRequest) {
   if (user && !isAuthPage) {
     response.cookies.set(LAST_ACTIVITY_COOKIE, Date.now().toString(), {
       path: '/',
-      httpOnly: false,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     })
@@ -85,6 +85,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)).*)',
   ],
 }

@@ -8,7 +8,7 @@ export async function signInAction(formData: FormData) {
   const password = formData.get('password') as string
   const redirectTo = (formData.get('redirect') as string) || '/'
 
-  const isValidRedirect = redirectTo.startsWith('/') && !redirectTo.startsWith('//') && !redirectTo.includes('\\')
+  const isValidRedirect = redirectTo.startsWith('/') && !redirectTo.startsWith('//') && !redirectTo.includes('\\') && !redirectTo.includes(':')
   const safeRedirectTo = isValidRedirect ? redirectTo : '/'
 
   if (!email || !password) {

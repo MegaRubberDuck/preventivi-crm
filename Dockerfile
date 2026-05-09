@@ -11,7 +11,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_PUBLIC_SUPABASE_URL=https://mdvtoqxyzyyehmxsvvds.supabase.co
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kdnRvcXh5enl5ZWhteHN2dmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTI3ODYsImV4cCI6MjA5MjM2ODc4Nn0.ZvYqiExLIghisK_hV-xJBpHRX5pdsEybOdPE04HDzc0
-ENV ENCRYPTION_KEY=2f93134ebaf406407b4d6564b55eef4ccf62df2bd2bf40cf70ea17d508d34167
 RUN npm run build
 
 FROM base AS runner

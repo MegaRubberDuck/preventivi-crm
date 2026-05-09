@@ -6,8 +6,8 @@ import { AuthProvider } from '@/context/AuthContext'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'MRD CRM — Preventivi',
-  description: 'CRM preventivi MegaRubberDuck Dev',
+  title: 'Plancia MRD',
+  description: 'Plancia MRD',
   icons: {
     icon: '/logo-megarubberduck.ico',
   },

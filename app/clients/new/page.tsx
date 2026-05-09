@@ -70,7 +70,7 @@ export default function NewClientPage() {
       <header className="sticky top-0 z-50 bg-white border-b border-[#e0e2e6] h-12 flex items-center px-6 gap-6">
         <div className="flex items-center gap-2.5 mr-2">
           <img src="/logo_rubberducklab.png" alt="RubberDuckLab" className="h-7 w-auto" />
-          <span className="text-[13px] font-semibold text-[#181d26] tracking-tight">MRD Preventivi</span>
+          <span className="text-[13px] font-semibold text-[#181d26] tracking-tight">Plancia MRD</span>
         </div>
         <nav className="flex items-center gap-1 text-[13px]">
           <Link href="/" className="px-3 py-1.5 rounded-[6px] text-[#181d26]/70 hover:bg-[#f8fafc] hover:text-[#181d26] transition-colors">Preventivi</Link>

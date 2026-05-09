@@ -23,7 +23,7 @@ export default async function EditQuotePage({ params }: Props) {
       <header className="sticky top-0 z-50 bg-white border-b border-[#e0e2e6] h-12 flex items-center px-6 gap-4">
         <div className="flex items-center gap-2.5">
           <img src="/logo_rubberducklab.png" alt="RubberDuckLab" className="h-7 w-auto" />
-          <span className="text-[13px] font-semibold text-[#181d26] tracking-tight">MRD Preventivi</span>
+          <span className="text-[13px] font-semibold text-[#181d26] tracking-tight">Plancia MRD</span>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#181d26]/30" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
         <Link href="/" className="text-[13px] text-[#181d26]/50 hover:text-[#181d26]">Dashboard</Link>
