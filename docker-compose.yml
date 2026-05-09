@@ -1,14 +1,33 @@
-version: '3.8'
 services:
-  crm-app:
-    build: .
-    container_name: crm-app
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - default
+
+  n8n:
+    image: n8nio/n8n
     restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      - WEBHOOK_URL=https://n8n.megarubberduck.it
+      - GENERIC_TIMEZONE=Europe/Rome
+    volumes:
+      - n8n_data:/home/node/.n8n
     networks:
-      - n8n-server_default
+      - default
+
+volumes:
+  caddy_data:
+  caddy_config:
+  n8n_data:
 
 networks:
-  n8n-server_default:
-    external: true
+  default:
+    name: n8n-server_default
