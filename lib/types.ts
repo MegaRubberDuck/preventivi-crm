@@ -92,15 +92,30 @@ export interface MAUTBenefit {
   stake: string
 }
 
+export interface EVCItem {
+  id: string
+  name: string
+  typeId: string
+  fields: Record<string, number>
+  conf: 'high' | 'med' | 'low'
+}
+
 export interface MAUTData {
   benefits: MAUTBenefit[]
   costoInterno: number
   canone: number
-  evcNetto: number
-  evcPeso: number
+  evcNetto: number       // legacy manual EVC — kept for backward compat
+  evcPeso: number        // 0–100: weight of EVC vs MAUT in final blend
   captureRatio: number
   discountRate: number
   multiplier?: number
+  // EVC (Sessione A)
+  rpItems?: EVCItem[]
+  vdpItems?: EVCItem[]
+  vdnItems?: EVCItem[]
+  tipoCliente?: string
+  loadedRate?: number    // default €/h used when creating new items
+  crAltro?: number       // manual CR override (0 = use captureRatio slider)
 }
 
 export interface ResultSnapshot {
@@ -124,10 +139,17 @@ export interface ResultSnapshot {
   extOnce: number
   extMonthly: number
   costoTotaleInterno: number
-  // mautValPonderato is now ANNUAL weighted MAUT value (base scenario)
+  // EVC (Sessione A) computed totals
+  evcRP: number
+  evcVDP: number
+  evcVDN: number
+  evcNettoCalc: number
+  // calcFinal() equivalent = evcNetto*evcPeso + mautBase*(1-evcPeso) — used in buildScenDetail
+  finalValCombinedBase: number
+  // MAUT annual weighted value (base scenario)
   mautValPonderato: number
   mautTotPeso: number
-  // Scenario annual values (before applying capture ratio)
+  // Scenario annual combined values (before capture ratio)
   mautValConservativo: number
   mautValBase: number
   mautValAggressivo: number

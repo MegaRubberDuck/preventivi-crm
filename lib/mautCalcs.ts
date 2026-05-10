@@ -1,22 +1,34 @@
-// Shared annual MAUT calculations — usable by both client components and server actions
+// MAUT annual calculations — field names and formulas match exactly giammario_v8.html
+// ore_pers: f.ore*f.r*12
+// fatturato: f.fat*(f.p/100)*12
+// errori: f.c*f.n*(f.p/100)*12
+// rework: f.ore*f.r*(f.p/100)*12
+// churn: f.cli*f.ltv*12
+// outsourcing: f.c*(f.p/100)*12
+// coordinamento: f.np*f.ore*f.r*(f.p/100)*12
+// opportunity: f.ore*f.v*12
+// scalabilita: f.c*f.p*12  (p is 0–1 decimal)
+// compliance: f.p*f.imp*(f.e/100)  (p is 0–1 decimal)
+// onboarding: f.ore*f.r*f.ass
+// ttm: f.s*f.m
+// circolante: f.cr*(f.g/365)*(f.cc/100)
+// maut_a: f.v
 
 export const MAUT_CALCS_ANNUAL: Record<string, (f: Record<string, number>) => number> = {
-  ore_personale:   (f) => (f.ore ?? 0) * (f.costoOra ?? 0) * 12,
-  fatturato:       (f) => (f.fattExtra ?? 0) * ((f.pctAttr ?? 0) / 100) * 12,
-  errori:          (f) => (f.costoErr ?? 0) * (f.freqErr ?? 0) * ((f.pctRid ?? 0) / 100) * 12,
-  churn:           (f) => (f.clientiSalvati ?? 0) * (f.ltv ?? 0) * 12,
-  ttm:             (f) => (f.settimane ?? 0) * (f.margSett ?? 0),
-  cac:             (f) => Math.max(0, ((f.cacAtt ?? 0) - (f.cacNew ?? 0)) * (f.volClienti ?? 0) * 12),
-  formazione:      (f) => (f.oreForm ?? 0) * (f.costoHR ?? 0) * (f.assunzioni ?? 0),
-  licenze:         (f) => (f.licenzeMese ?? 0) * 12,
-  outsourcing:     (f) => (f.costoOut ?? 0) * ((f.pctAuto ?? 0) / 100) * 12,
-  dataquality:     (f) => ((f.oreCorrezione ?? 0) * (f.costoOraRuolo ?? 0) + (f.costoDecErrate ?? 0)) * ((f.pctMiglioramento ?? 0) / 100) * 12,
-  stress:          (f) => (f.giorniAssenza ?? 0) * (f.costoGiornata ?? 0) * (f.nPersone ?? 0) * ((f.pctRid ?? 0) / 100),
-  compliance:      (f) => ((f.probSanzione ?? 0) / 100) * (f.importoSanzione ?? 0) * ((f.pctEliminato ?? 0) / 100),
-  opportunitycost: (f) => (f.oreLiberate ?? 0) * (f.valorOraAlto ?? 0) * 12,
-  scalabilita:     (f) => (f.costoRisorsa ?? 0) * ((f.probCrescita ?? 0) / 100) * 12,
-  coordinamento:   (f) => (f.nPersone ?? 0) * (f.oreCoord ?? 0) * (f.costoOraMedio ?? 0) * ((f.pctRid ?? 0) / 100) * 12,
-  decisioni:       (f) => (f.valDec ?? 0) * 12,
+  ore_pers:      (f) => (f.ore ?? 0) * (f.r ?? 0) * 12,
+  fatturato:     (f) => (f.fat ?? 0) * ((f.p ?? 0) / 100) * 12,
+  errori:        (f) => (f.c ?? 0) * (f.n ?? 0) * ((f.p ?? 0) / 100) * 12,
+  rework:        (f) => (f.ore ?? 0) * (f.r ?? 0) * ((f.p ?? 0) / 100) * 12,
+  churn:         (f) => (f.cli ?? 0) * (f.ltv ?? 0) * 12,
+  outsourcing:   (f) => (f.c ?? 0) * ((f.p ?? 0) / 100) * 12,
+  coordinamento: (f) => (f.np ?? 0) * (f.ore ?? 0) * (f.r ?? 0) * ((f.p ?? 0) / 100) * 12,
+  opportunity:   (f) => (f.ore ?? 0) * (f.v ?? 0) * 12,
+  scalabilita:   (f) => (f.c ?? 0) * (f.p ?? 0) * 12,
+  compliance:    (f) => (f.p ?? 0) * (f.imp ?? 0) * ((f.e ?? 0) / 100),
+  onboarding:    (f) => (f.ore ?? 0) * (f.r ?? 0) * (f.ass ?? 0),
+  ttm:           (f) => (f.s ?? 0) * (f.m ?? 0),
+  circolante:    (f) => (f.cr ?? 0) * ((f.g ?? 0) / 365) * ((f.cc ?? 0) / 100),
+  maut_a:        (f) => f.v ?? 0,
 }
 
 export function calcBenValAnnual(typeId: string, fields: Record<string, number>): number {

@@ -2,7 +2,8 @@
 
 import { TCF_FACTORS, ECF_FACTORS, FP_TYPES } from '@/lib/constants'
 import { calcBenValAnnual } from '@/lib/mautCalcs'
-import type { SizingData, ComponentData, StaffingData, MAUTData, MAUTBenefit, ResultSnapshot } from '@/lib/types'
+import { calcRP, calcVDP, calcVDN, applyEVCFactor } from '@/lib/evcCalcs'
+import type { SizingData, ComponentData, StaffingData, MAUTData, MAUTBenefit, EVCItem, ResultSnapshot } from '@/lib/types'
 
 // ─── Lookup tables ────────────────────────────────────────────────────────────
 
@@ -78,54 +79,49 @@ function _calcBrooks(n: number) {
 }
 
 /**
- * Compute the annual MAUT value for a single scenario factor.
- *
- * factor = 0.70 → conservativo (-30% bassa confidenza)
- * factor = 1.00 → bilanciato (nominal)
- * factor = 1.20 → aggressivo (+20% bassa conf, +8% alta conf)
- *
- * Confidence adjustment (from Keeney & Raiffa):
- *   low conf:  × factor
- *   high conf (factor > 1): × (1 + (factor−1) × 0.4)
- *   med conf:  × 1 (unchanged in all scenarios)
+ * Compute MAUT annual value for a scenario, applying confidence factors.
+ * factor = 0.70 conservativo / 1.00 base / 1.20 aggressivo
  */
 function _calcScenMAUT(benefits: MAUTBenefit[], factor: number): number {
   const totPeso = benefits.reduce((s, b) => s + b.peso, 0)
   if (totPeso === 0) return 0
-
   return benefits.reduce((s, b) => {
-    const baseVal = calcBenValAnnual(b.typeId, b.fields)
-    const conf = b.conf ?? 'med'
-    let adj: number
-    if (conf === 'low') {
-      adj = factor
-    } else if (conf === 'high' && factor > 1) {
-      adj = 1 + (factor - 1) * 0.4
-    } else {
-      adj = 1
-    }
-    return s + baseVal * adj * (b.peso / totPeso)
+    const base = calcBenValAnnual(b.typeId, b.fields)
+    return s + applyEVCFactor(base, b.conf ?? 'med', factor) * (b.peso / totPeso)
   }, 0)
 }
 
 /**
+ * Compute EVC scenario value from RP/VDP/VDN items with confidence factors.
+ * Mirrors calcScen() in giammario_v8.html.
+ */
+function _calcScenEVC(
+  rpItems: EVCItem[],
+  vdpItems: EVCItem[],
+  vdnItems: EVCItem[],
+  factor: number,
+): number {
+  const rpAdj  = rpItems.reduce((s, i)  => s + applyEVCFactor(calcRP(i.typeId, i.fields),  i.conf ?? 'med', factor), 0)
+  const vdpAdj = vdpItems.reduce((s, i) => s + applyEVCFactor(calcVDP(i.typeId, i.fields), i.conf ?? 'med', factor), 0)
+  const vdn    = vdnItems.reduce((s, i) => s + calcVDN(i.typeId, i.fields), 0)
+  return Math.max(0, rpAdj + vdpAdj - vdn)
+}
+
+/**
  * Compute scenario price.
- * Blends MAUT (and optional EVC) with capture ratio, floored by costoInterno.
+ * Blends EVC and MAUT with evcPeso weight, applies capture ratio, floors by costoInterno.
+ * Matches calcScen() in giammario_v8.html.
  */
 function _calcScenPrice(
   mautAnnual: number,
-  evcNetto: number,
+  evcAnnual: number,
   evcPeso: number,
   captureRatio: number,
   costoInterno: number,
-  evcFactor: number,
 ): number {
-  const evcPesoFrac = evcNetto > 0 ? evcPeso / 100 : 0
-  const evcAdj = evcNetto * evcFactor
-  const finalVal = evcAdj * evcPesoFrac + mautAnnual * (1 - evcPesoFrac)
-  const rawPrice = finalVal * (captureRatio / 100)
-  const rounded = roundTo100(rawPrice)
-  return Math.max(costoInterno, rounded)
+  const ew = evcAnnual > 0 ? evcPeso / 100 : 0
+  const finalVal = evcAnnual * ew + mautAnnual * (1 - ew)
+  return Math.max(costoInterno, roundTo100(finalVal * (captureRatio / 100)))
 }
 
 /** Compute NPV over 5 years from the client's perspective. */
@@ -166,40 +162,63 @@ export async function computeAll(
   let canoneEssential = 0, canoneConsigliato = 0, canonePremium = 0
   let paybackMonths = 0, nettoAnno1 = 0
   let captureRatioUsed = 20, vanBase5anni = 0
+  let finalValCombinedBase = 0
+
+  let evcRP = 0, evcVDP = 0, evcVDN = 0, evcNettoCalc = 0
 
   if (maut) {
-    const benefits = maut.benefits ?? []
+    const benefits  = maut.benefits  ?? []
+    const rpItems   = maut.rpItems   ?? []
+    const vdpItems  = maut.vdpItems  ?? []
+    const vdnItems  = maut.vdnItems  ?? []
     mautTotPeso = benefits.reduce((s, b) => s + b.peso, 0)
 
-    // Annual MAUT values per scenario
+    // EVC base totals (nominal, no scenario factor)
+    evcRP  = rpItems.reduce((s, i)  => s + calcRP(i.typeId, i.fields),  0)
+    evcVDP = vdpItems.reduce((s, i) => s + calcVDP(i.typeId, i.fields), 0)
+    evcVDN = vdnItems.reduce((s, i) => s + calcVDN(i.typeId, i.fields), 0)
+    evcNettoCalc = Math.max(0, evcRP + evcVDP - evcVDN)
+
+    // If EVC items are present use computed EVC, else fall back to manual evcNetto
+    const hasEvcItems = rpItems.length > 0 || vdpItems.length > 0
+    const evcBase = hasEvcItems ? evcNettoCalc : (maut.evcNetto ?? 0)
+
+    // MAUT annual values per scenario
     mautValConservativo = _calcScenMAUT(benefits, 0.70)
     mautValBase         = _calcScenMAUT(benefits, 1.00)
     mautValAggressivo   = _calcScenMAUT(benefits, 1.20)
     mautValPonderato    = mautValBase
 
-    const ci  = maut.costoInterno ?? 0
-    const can = maut.canone ?? 0
-    const cr  = maut.captureRatio ?? 20
-    const evc = maut.evcNetto ?? 0
-    const ew  = maut.evcPeso ?? 0
+    // EVC annual values per scenario (with confidence factors on items)
+    const evcCons = hasEvcItems ? _calcScenEVC(rpItems, vdpItems, vdnItems, 0.70) : evcBase
+    const evcBase2 = hasEvcItems ? _calcScenEVC(rpItems, vdpItems, vdnItems, 1.00) : evcBase
+    const evcAggr = hasEvcItems ? _calcScenEVC(rpItems, vdpItems, vdnItems, 1.20) : evcBase
+
+    const ci   = maut.costoInterno ?? 0
+    const can  = maut.canone ?? 0
+    const cr   = maut.crAltro && maut.crAltro > 0 ? maut.crAltro : (maut.captureRatio ?? 20)
+    const ew   = maut.evcPeso ?? 0
     const disc = maut.discountRate ?? 8
     captureRatioUsed = cr
 
-    // Scenario prices: A=conservativo, B=bilanciato, C=aggressivo
-    prezzoEssential   = _calcScenPrice(mautValConservativo, evc, ew, cr, ci, 0.70)
-    prezzoConsigliato = _calcScenPrice(mautValBase,         evc, ew, cr, ci, 1.00)
-    prezzoPremium     = _calcScenPrice(mautValAggressivo,   evc, ew, cr, ci, 1.20)
+    // Scenario prices (EVC + MAUT blend → capture ratio → floor ci)
+    prezzoEssential   = _calcScenPrice(mautValConservativo, evcCons,  ew, cr, ci)
+    prezzoConsigliato = _calcScenPrice(mautValBase,         evcBase2, ew, cr, ci)
+    prezzoPremium     = _calcScenPrice(mautValAggressivo,   evcAggr,  ew, cr, ci)
 
     canoneEssential   = Math.round(can * 0.6)
     canoneConsigliato = can
     canonePremium     = Math.round(can * 1.5)
 
-    if (mautValBase > 0) {
-      paybackMonths = prezzoConsigliato / (mautValBase / 12)
-      nettoAnno1    = mautValBase - prezzoConsigliato
+    // calcFinal() equivalent — same guard as _calcScenPrice: ew=0 when no EVC data
+    const ewFrac = evcBase2 > 0 ? ew / 100 : 0
+    const combinedBase = evcBase2 * ewFrac + mautValBase * (1 - ewFrac)
+    finalValCombinedBase = combinedBase
+    if (combinedBase > 0) {
+      paybackMonths = prezzoConsigliato / (combinedBase / 12)
+      nettoAnno1    = combinedBase - prezzoConsigliato
     }
-
-    vanBase5anni = _calcVAN(prezzoConsigliato, mautValBase, can * 12, disc)
+    vanBase5anni = _calcVAN(prezzoConsigliato, combinedBase, can * 12, disc)
   }
 
   const deltaS1S2Pct = s1 > 0 ? ((s2 - s1) / s1) * 100 : 0
@@ -222,6 +241,8 @@ export async function computeAll(
     ufp: fpRes.ufp, vaf: fpRes.vaf, afp: fpRes.afp, fpEffort: fpRes.effort,
     compAdjTotal: s2, pm, tdev, teamImplicit, brooksOverheadPct,
     costoBase, costoConOverhead, extOnce, extMonthly, costoTotaleInterno,
+    evcRP, evcVDP, evcVDN, evcNettoCalc,
+    finalValCombinedBase,
     mautValPonderato, mautTotPeso,
     mautValConservativo, mautValBase, mautValAggressivo,
     prezzoEssential, prezzoConsigliato, prezzoPremium,

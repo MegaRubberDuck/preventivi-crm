@@ -50,9 +50,15 @@ const DEFAULT_MAUT: MAUTData = {
   costoInterno: 0,
   canone: 300,
   evcNetto: 0,
-  evcPeso: 0,
+  evcPeso: 50,
   captureRatio: 20,
   discountRate: 8,
+  rpItems: [],
+  vdpItems: [],
+  vdnItems: [],
+  tipoCliente: 'pmi',
+  loadedRate: 35,
+  crAltro: 0,
 }
 
 interface Props {

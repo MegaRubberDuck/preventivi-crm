@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, Suspense, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { signInAction } from '@/actions/auth'
 import { useAuth } from '@/context/AuthContext'
 
@@ -10,7 +10,6 @@ const isValidRedirect = (url: string): boolean => {
 }
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const rawRedirect = searchParams.get('redirect') || '/'
   const redirect = isValidRedirect(rawRedirect) ? rawRedirect : '/'
@@ -24,11 +23,11 @@ function LoginForm() {
     if (user) {
       setShowSuccess(true)
       const timer = setTimeout(() => {
-        router.push(redirect)
+        window.location.href = redirect
       }, 800)
       return () => clearTimeout(timer)
     }
-  }, [user, redirect, router])
+  }, [user, redirect])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -44,7 +43,7 @@ function LoginForm() {
         setError(String(result.error))
       } else if (result && 'success' in result) {
         setShowSuccess(true)
-        setTimeout(() => router.push(result.redirectTo || '/'), 800)
+        setTimeout(() => { window.location.href = result.redirectTo || '/' }, 800)
       }
     } catch (err: unknown) {
       if (err instanceof Error && !err.message.includes('NEXT_REDIRECT')) {
